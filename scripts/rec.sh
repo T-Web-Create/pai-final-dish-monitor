@@ -7,4 +7,4 @@ read -r GEOM OFF < <(xrandr --listmonitors | awk -v m="$MON" '$NF==m{split($3,a,
 [[ -n "${GEOM:-}" ]] || { echo "モニター $MON なし"; xrandr --listmonitors; exit 1; }
 OUT="/mnt/llm-storage/pai-final/recordings/$(date +%Y%m%d_%H%M%S)${TAG:+_$TAG}.mp4"
 echo "録画: $MON ($GEOM, 位置 $OFF) → $OUT   止めるときは q"
-exec ffmpeg -hide_banner -loglevel warning -stats -f x11grab -framerate 30 -video_size "$GEOM" -i "${DISPLAY}+${OFF}" -c:v libx264 -preset veryfast -crf 23 -pix_fmt yuv420p "$OUT"
+exec ffmpeg -hide_banner -loglevel warning -stats -f x11grab -framerate 30 -video_size "$GEOM" -i "${DISPLAY}+${OFF}" -c:v libx264 -preset veryfast -crf 23 -pix_fmt yuv420p -movflags +frag_keyframe+empty_moov+default_base_moof "$OUT"
