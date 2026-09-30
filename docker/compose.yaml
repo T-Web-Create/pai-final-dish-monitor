@@ -1,0 +1,51 @@
+# 課題専用の compose プロジェクト。片付けは scripts/down.sh --purge
+name: pai-final
+
+services:
+  sim:
+    build:
+      context: .
+      args:
+        USERNAME: ${HOST_USER:-t2o}
+        UID: ${HOST_UID:-1000}
+        GID: ${HOST_GID:-1000}
+    image: pai-final-sim:jazzy
+    container_name: pai-sim
+    network_mode: host          # ROS2 通信と、ホストの vLLM（localhost）への接続
+    ipc: host
+    environment:
+      DISPLAY: ${DISPLAY}
+      QT_X11_NO_MITSHM: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: all   # graphics を含める（Gazebo の GPU 描画に必要）
+      ROS_DOMAIN_ID: "42"               # 他の ROS2 通信と混ざらないように
+      ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, utility, graphics, display]
+    volumes:
+      - type: bind
+        source: /tmp/.X11-unix
+        target: /tmp/.X11-unix
+      # SSD 上のプロジェクト。未マウント時に空フォルダを作らないよう create_host_path: false
+      - type: bind
+        source: ../ros2_ws
+        target: /home/${HOST_USER:-t2o}/ros2_ws
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../data
+        target: /home/${HOST_USER:-t2o}/data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../recordings
+        target: /home/${HOST_USER:-t2o}/recordings
+        bind:
+          create_host_path: false
+    stdin_open: true
+    tty: true
