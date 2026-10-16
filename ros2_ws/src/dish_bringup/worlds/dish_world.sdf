@@ -44,6 +44,7 @@
       <pose>0.50 0 0.30 0 0.95 3.14159</pose>
       <link name="link">
         <visual name="body">
+          <cast_shadows>false</cast_shadows>
           <geometry><box><size>0.03 0.03 0.03</size></box></geometry>
           <material>
             <ambient>0.1 0.1 0.1 1</ambient>
