@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ros-jazzy-ur \
       ros-jazzy-ur-simulation-gz \
       ros-jazzy-moveit \
+      ros-jazzy-ros2controlcli \
       python3-colcon-common-extensions \
       mesa-utils git sudo less vim bash-completion \
     && rm -rf /var/lib/apt/lists/*
