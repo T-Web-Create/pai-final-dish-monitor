@@ -7,3 +7,4 @@ Y=${2:-0.0}
 ros2 run ros_gz_sim create -file $M/rack_plate/model.sdf -name rack_plate -x $X -y $Y -z 0.005
 ros2 run ros_gz_sim create -file $M/dish_body/model.sdf -name dish_body -x $X -y $Y -z 0.0185
 ros2 run ros_gz_sim create -file $M/dish_lid/model.sdf -name dish_lid -x $X -y $Y -z 0.0295
+sleep 1; gz topic -t /suction/detach -m gz.msgs.Empty -p " "
