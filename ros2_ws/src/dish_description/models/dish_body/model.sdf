@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="dish_body">
+    <link name="link">
+      <inertial>
+        <mass>0.05</mass>
+        <inertia>
+          <ixx>3.06e-5</ixx><iyy>3.06e-5</iyy><izz>5.76e-5</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+        </inertia>
+      </inertial>
+      <collision name="col">
+        <geometry><cylinder><radius>0.048</radius><length>0.016</length></cylinder></geometry>
+        <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
+      </collision>
+      <visual name="vis">
+        <geometry><cylinder><radius>0.048</radius><length>0.016</length></cylinder></geometry>
+        <material>
+          <ambient>0.85 0.95 1.0 1</ambient>
+          <diffuse>0.85 0.95 1.0 1</diffuse>
+        </material>
+        <transparency>0.4</transparency>
+      </visual>
+    </link>
+  </model>
+</sdf>
