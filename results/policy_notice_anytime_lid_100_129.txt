@@ -1,0 +1,11 @@
+cond lid, seeds 100-129, 30 dishes
+-- delay from first colony appearing (h), same definitions as policy_sim
+first suspicion or confirm (any):    median 5.1 mean 5.6 min -0.8 max 11.9 (n=30)
+first confirm:                       median 11.1 mean 11.6 min 5.2 max 17.9 (n=30)
+-- delay counting only suspicions near a TRUE colony
+first true suspicion:                median 5.1 mean 5.6 min -0.8 max 11.9 (n=30)
+-- what was the very first notice? true only 30 / false only 0 / both 0 / none 0
+dishes with a false suspicion before the first true one: 0 / 30
+-- suspicions per dish over 72 h (distinct tracks): true mean 18.0, false mean 0.33 (total false 10)
+-- fate of false suspicions at the last snapshot: {'artifact': 3, 'new': 7}
+snapshots a false suspicion stayed pending (x6 h): median 3.0 max 6
