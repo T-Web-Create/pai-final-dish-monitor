@@ -6,7 +6,7 @@ D=$HOME/ros2_ws/src/dish_bringup/scripts
 for T in "$@"; do
   ok=0
   for TRY in 1 2 3; do
-    if timeout -k 5 150 python3 $D/patrol.py $T; then ok=1; break; fi
+    if timeout -k 5 150 python3 $D/${PATROL:-patrol.py} $T; then ok=1; break; fi
     echo "t=${T}h failed or timed out (try $TRY); recovering"
     timeout -k 5 60 python3 $D/recover.py
   done

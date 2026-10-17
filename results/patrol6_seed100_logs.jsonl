@@ -1,0 +1,15 @@
+{"t_h": 18, "kind": "suspected", "image": "/home/t2o/recordings/patrol6/lid_t018.png", "n_col": 0, "n_pend": 3}
+{"t_h": 24, "kind": "confirmed", "image": "/home/t2o/recordings/patrol6/open_t024.png", "n_col": 3, "n_pend": 4}
+{"t_h": 0, "n_pend": 0, "n_col": 0, "opened": true, "open_time": 8.955000000001746}
+{"t_h": 6, "n_pend": 0, "n_col": 0, "opened": false}
+{"t_h": 12, "n_pend": 0, "n_col": 0, "opened": false}
+{"t_h": 18, "n_pend": 3, "n_col": 0, "opened": false}
+{"t_h": 24, "n_pend": 4, "n_col": 3, "opened": true, "open_time": 8.714000000007218}
+{"t_h": 30, "n_pend": 7, "n_col": 7, "opened": false}
+{"t_h": 36, "n_pend": 7, "n_col": 14, "opened": false}
+{"t_h": 42, "n_pend": 7, "n_col": 22, "opened": false}
+{"t_h": 48, "n_pend": 1, "n_col": 30, "opened": false}
+{"t_h": 54, "n_pend": 0, "n_col": 31, "opened": false}
+{"t_h": 60, "n_pend": 1, "n_col": 31, "opened": false}
+{"t_h": 66, "n_pend": 0, "n_col": 32, "opened": false}
+{"t_h": 72, "n_pend": 0, "n_col": 32, "opened": false}

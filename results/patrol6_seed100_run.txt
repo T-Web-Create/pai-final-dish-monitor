@@ -1,0 +1,16 @@
+t= 0h pending 0 confirmed 0 opened True open time (sim) 8.96 s
+t= 6h pending 0 confirmed 0 opened False
+t=12h pending 0 confirmed 0 opened False
+NOTICE t=18h suspected (pending 3, confirmed 0)
+t=18h pending 3 confirmed 0 opened False
+NOTICE t=24h confirmed (confirmed 3)
+t=24h pending 4 confirmed 3 opened True open time (sim) 8.71 s
+t=30h pending 7 confirmed 7 opened False
+t=36h pending 7 confirmed 14 opened False
+t=42h pending 7 confirmed 22 opened False
+t=48h pending 1 confirmed 30 opened False
+t=54h pending 0 confirmed 31 opened False
+t=60h pending 1 confirmed 31 opened False
+t=66h pending 0 confirmed 32 opened False
+t=72h pending 0 confirmed 32 opened False
+ALL DONE
