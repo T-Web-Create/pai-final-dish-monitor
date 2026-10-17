@@ -204,13 +204,14 @@ def main():
     ap.add_argument('--seed-start', type=int, default=0)
     ap.add_argument('--seed-count', type=int, default=1)
     ap.add_argument('--out', default='../../data/synth')
+    ap.add_argument('--n-colonies', type=int, default=None)
     args = ap.parse_args()
     out = Path(args.out)
     for seed in range(args.seed_start, args.seed_start + args.seed_count):
         rng = np.random.default_rng(seed)
         scene = dict(seed=seed, times_h=TIMES, px_per_mm=PX_PER_MM, size_px=SIZE,
                      r_dish_mm=R_DISH_MM, r_vis_mm=R_VIS_MM,
-                     colonies=sample_colonies(rng, int(rng.integers(3, 41))))
+                     colonies=sample_colonies(rng, int(rng.integers(3, 41)) if args.n_colonies is None else (rng.integers(3, 41), args.n_colonies)[1]))
         scene['artifacts'] = sample_artifacts(rng)
         for c in scene['colonies']:
             c['radius_mm_by_time'] = [float(logistic(t, c['r_max_mm'], c['k_per_h'], c['t_mid_h']))

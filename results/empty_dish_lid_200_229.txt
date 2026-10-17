@@ -1,0 +1,5 @@
+cond lid, colony-free seeds 200-229, 30 dishes
+dishes with >=1 false suspicion: 0 / 30
+false suspicions per dish (distinct tracks): mean 0.00 max 0
+dishes with a false CONFIRM (plan 6 would open the lid): 0 / 30
+fate at 72 h: {}
