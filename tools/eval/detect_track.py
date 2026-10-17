@@ -9,7 +9,8 @@ import numpy as np
 
 CFG = dict(med_k=41, blur_sigma=1.0, thr=4.5, min_area=5, max_r_mm=5.0, max_aspect=2.0,
            match_px=4.0, grow_ratio=1.2, grow_abs_px=1.0, min_obs=3, static_obs=3,
-           gt_match_px=6.0, need_bright=False)
+           gt_match_px=6.0, need_bright=False,
+           max_gap_h=6.0, mono_tol=1.0)
 
 
 def detect(rgb, ppm, dish_r_mm, cfg):
@@ -41,6 +42,20 @@ def detect(rgb, ppm, dish_r_mm, cfg):
     return dets
 
 
+def sustained(tr, cfg):
+    """True if the last min_obs observations are consecutive and non-decreasing (within tolerance)."""
+    recent = tr['obs'][-cfg['min_obs']:]
+    if cfg['max_gap_h'] is not None:
+        ts = [t for t, _ in recent]
+        if any(b - a > cfg['max_gap_h'] for a, b in zip(ts, ts[1:])):
+            return False
+    if cfg['mono_tol'] is not None:
+        rr = [r for _, r in recent]
+        if any(b < a - cfg['mono_tol'] for a, b in zip(rr, rr[1:])):
+            return False
+    return True
+
+
 def classify(tr, cfg):
     if tr['status'] == 'colony':
         return
@@ -48,7 +63,8 @@ def classify(tr, cfg):
     tr['status'] = 'new'
     if len(rs) >= cfg['min_obs'] and (tr['sign'] > 0 or not cfg['need_bright']):
         base = min(rs[:-1])
-        if rs[-1] >= cfg['grow_ratio'] * base and rs[-1] - base >= cfg['grow_abs_px']:
+        if (rs[-1] >= cfg['grow_ratio'] * base and rs[-1] - base >= cfg['grow_abs_px']
+                and sustained(tr, cfg)):
             tr['status'] = 'colony'
             tr['confirm_t'] = tr['obs'][-1][0]
             return
