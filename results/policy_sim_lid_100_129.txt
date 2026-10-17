@@ -1,0 +1,9 @@
+cond lid, seeds 100-129, final confirmed colonies (sanity) 553
+policy  opens/dish (mean, min-max)  opens w/o new confirm  open time/dish
+P0       13.0 (13-13)                6.0                    116 s
+P1        7.0 ( 2-10)                0.0                     62 s
+P1f       2.0 ( 2- 2)                0.0                     18 s
+P2        9.1 ( 5-12)                2.1                     81 s
+P3        7.4 ( 4-10)                0.4                     66 s
+first-colony notice delay (h): confirmed median 11.1 mean 11.6 | suspected median 5.1 mean 5.6 (n=30)
+pending-track snapshots not near a true colony (all seeds, all times): 30
