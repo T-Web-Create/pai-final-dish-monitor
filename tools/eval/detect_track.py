@@ -7,15 +7,18 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-CFG = dict(med_k=41, blur_sigma=1.0, thr=4.5, min_area=5, max_r_mm=5.0, max_aspect=2.0,
+CFG = dict(med_k=41, blur_sigma=1.0, thr=3.0, min_area=5, max_r_mm=5.0, max_aspect=2.0,
            match_px=4.0, grow_ratio=1.2, grow_abs_px=1.0, min_obs=3, static_obs=3,
            gt_match_px=6.0, need_bright=False,
-           max_gap_h=6.0, mono_tol=1.0, base_mode='min', merge_frac=1.0)
+           max_gap_h=6.0, mono_tol=1.0, base_mode='min', merge_frac=1.0, diff_ref=True)
 
 
-def detect(rgb, ppm, dish_r_mm, cfg):
+def detect(rgb, ppm, dish_r_mm, cfg, ref=None):
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
-    bg = cv2.medianBlur(gray, cfg['med_k']).astype(np.float32)
+    if ref is None:
+        bg = cv2.medianBlur(gray, cfg['med_k']).astype(np.float32)
+    else:
+        bg = cv2.GaussianBlur(ref.astype(np.float32), (0, 0), cfg['blur_sigma'])
     res = cv2.GaussianBlur(gray.astype(np.float32), (0, 0), cfg['blur_sigma']) - bg
     h, w = gray.shape
     yy, xx = np.mgrid[0:h, 0:w]
@@ -175,9 +178,13 @@ def run_seed(seed, root, cond, cfg):
     gt = json.loads((sdir / 'labels.json').read_text())
     tracks = []
     last = None
+    ref = None
+    if cfg['diff_ref']:
+        ref = cv2.cvtColor(cv2.imread(str(sdir / cond / ('t_%03d.png' % gt['times_h'][0]))),
+                           cv2.COLOR_BGR2GRAY)
     for t in gt['times_h']:
         bgr = cv2.imread(str(sdir / cond / ('t_%03d.png' % t)))
-        dets = detect(bgr[..., ::-1].copy(), gt['px_per_mm'], gt['r_dish_mm'], cfg)
+        dets = detect(bgr[..., ::-1].copy(), gt['px_per_mm'], gt['r_dish_mm'], cfg, ref)
         update(tracks, dets, t, cfg)
         last = bgr
     tracks = merge_duplicates(tracks, cfg['merge_frac'])
