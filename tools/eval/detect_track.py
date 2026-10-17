@@ -10,7 +10,7 @@ import numpy as np
 CFG = dict(med_k=41, blur_sigma=1.0, thr=4.5, min_area=5, max_r_mm=5.0, max_aspect=2.0,
            match_px=4.0, grow_ratio=1.2, grow_abs_px=1.0, min_obs=3, static_obs=3,
            gt_match_px=6.0, need_bright=False,
-           max_gap_h=6.0, mono_tol=1.0)
+           max_gap_h=6.0, mono_tol=1.0, base_mode='min', merge_frac=1.0)
 
 
 def detect(rgb, ppm, dish_r_mm, cfg):
@@ -56,13 +56,21 @@ def sustained(tr, cfg):
     return True
 
 
+def baseline(rs, cfg):
+    """Reference radius for the growth test."""
+    if cfg['base_mode'] == 'min':
+        return min(rs[:-1])
+    head = sorted(rs[:max(1, len(rs) // 2)])
+    return head[(len(head) - 1) // 2]
+
+
 def classify(tr, cfg):
     if tr['status'] == 'colony':
         return
     rs = [r for _, r in tr['obs']]
     tr['status'] = 'new'
     if len(rs) >= cfg['min_obs'] and (tr['sign'] > 0 or not cfg['need_bright']):
-        base = min(rs[:-1])
+        base = baseline(rs, cfg)
         if (rs[-1] >= cfg['grow_ratio'] * base and rs[-1] - base >= cfg['grow_abs_px']
                 and sustained(tr, cfg)):
             tr['status'] = 'colony'
@@ -139,7 +147,7 @@ def overlay(img, tracks):
     return out
 
 
-def merge_duplicates(tracks):
+def merge_duplicates(tracks, frac=1.0):
     """Merge a track into a larger one if its centre lies inside the larger track's circle."""
     def rmax(tr):
         return max(r for _, r in tr['obs'])
@@ -148,7 +156,7 @@ def merge_duplicates(tracks):
     for tr in sorted(tracks, key=rmax, reverse=True):
         host = None
         for k in kept:
-            if np.hypot(tr['x'] - k['x'], tr['y'] - k['y']) <= rmax(k):
+            if np.hypot(tr['x'] - k['x'], tr['y'] - k['y']) <= frac * rmax(k):
                 host = k
                 break
         if host is None:
@@ -172,7 +180,7 @@ def run_seed(seed, root, cond, cfg):
         dets = detect(bgr[..., ::-1].copy(), gt['px_per_mm'], gt['r_dish_mm'], cfg)
         update(tracks, dets, t, cfg)
         last = bgr
-    tracks = merge_duplicates(tracks)
+    tracks = merge_duplicates(tracks, cfg['merge_frac'])
     return gt, tracks, last
 
 
