@@ -13,11 +13,12 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path('/mnt/llm-storage/pai-final')
 VID = ROOT / 'recordings' / 'video'
-SRC = VID / 'patrol6_v5'
+REC = os.environ.get('REC', 'v6')
+SRC = VID / ('patrol6_' + REC)
 OUT = VID / 'panels'
-LOG = VID / 'patrol6_log_seed112_v5.jsonl'
-NOTI = VID / 'notify_log_seed112_v5.jsonl'
-REC0 = float((VID / 'rec_start_v5.txt').read_text())
+LOG = VID / ('patrol6_log_seed112_%s.jsonl' % REC)
+NOTI = VID / ('notify_log_seed112_%s.jsonl' % REC)
+REC0 = float((VID / ('rec_start_%s.txt' % REC)).read_text())
 sys.path.insert(0, str(ROOT / 'tools' / 'eval'))
 from detect_track import CFG, detect, merge_duplicates, update  # noqa: E402
 sys.path.insert(0, str(ROOT / 'ros2_ws' / 'src' / 'dish_bringup' / 'scripts'))
