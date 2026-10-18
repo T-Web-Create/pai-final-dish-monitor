@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sys
+import time
 
 import cv2
 import rclpy
@@ -43,6 +44,7 @@ def lid_series(t_max):
 
 def main():
     t = int(sys.argv[1])
+    wall = dict(start=time.time())
     os.makedirs(WARP, exist_ok=True)
     os.makedirs(os.path.dirname(NOTIFY), exist_ok=True)
     rclpy.init()
@@ -55,19 +57,21 @@ def main():
     node.hold(0.5)
     raw = os.path.join(OUT, 'lid_t%03d.png' % t)
     node.grab(raw)
+    wall['lid_grab'] = time.time()
     cv2.imwrite(os.path.join(WARP, 'lid_t%03d.png' % t), warp(cv2.imread(raw), 'lid'))
 
     st = lid_state(lid_series(t))
     sent = sent_kinds()
     rec = dict(t_h=t, n_pend=st['n_pend'], n_col=st['n_col'], opened=False)
     if t > 0 and st['n_pend'] + st['n_col'] > 0 and 'suspected' not in sent:
-        append(NOTIFY, dict(t_h=t, kind='suspected', image=raw, **st))
+        append(NOTIFY, dict(t_h=t, kind='suspected', image=raw, wall=time.time(), **st))
         print('NOTICE t=%dh suspected (pending %d, confirmed %d)' % (t, st['n_pend'], st['n_col']), flush=True)
 
     if t == 0 or (st['n_col'] > 0 and 'confirmed' not in sent):
         node.create('open', t, 0.027)
         node.move('DOWN', 3.0)
         t_attach = node.sim
+        wall['attach'] = time.time()
         node.suction('/suction/attach')
         node.hold(0.5)
         node.move('LIFT', 1.5)
@@ -75,19 +79,23 @@ def main():
         node.move('RETRACT', 2.0)
         img_open = os.path.join(OUT, 'open_t%03d.png' % t)
         node.grab(img_open)
+        wall['open_grab'] = time.time()
         node.move('LIFT', 2.0)
         node.move('DOWN', 1.5)
         node.suction('/suction/detach')
         t_detach = node.sim
+        wall['detach'] = time.time()
         node.hold(0.5)
         node.move('HIGH', 3.0)
         rec.update(opened=True, open_time=t_detach - t_attach)
         if t > 0:
-            append(NOTIFY, dict(t_h=t, kind='confirmed', image=img_open, **st))
+            append(NOTIFY, dict(t_h=t, kind='confirmed', image=img_open, wall=time.time(), **st))
             print('NOTICE t=%dh confirmed (confirmed %d)' % (t, st['n_col']), flush=True)
 
     node.remove('plate_lid')
     node.remove('plate_open')
+    wall['end'] = time.time()
+    rec['wall'] = wall
     append(LOG, rec)
     print('t=%2dh pending %d confirmed %d opened %s%s' % (
         t, st['n_pend'], st['n_col'], rec['opened'],

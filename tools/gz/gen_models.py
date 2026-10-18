@@ -42,7 +42,7 @@ for cond in ('lid', 'open'):
         tex.mkdir(parents=True, exist_ok=True)
         for old in tex.glob('*.png'):
             old.unlink()
-        fname = name + '.png'
+        fname = 's%d_' % seed + name + '.png'
         shutil.copy(img, tex / fname)
         (d / 'model.sdf').write_text(SDF.replace('TEXFILE', fname))
         n += 1

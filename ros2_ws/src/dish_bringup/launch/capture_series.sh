@@ -14,5 +14,5 @@ for COND in lid open; do
     python3 $L/scripts/save_image.py $OUT/$(printf '%s_t%03d.png' $COND $T)
   done
 done
-kill $BR
+kill $BR; pkill -f "lib/ros_gz_image/image_bridge /dish_camera/image" 2>/dev/null
 echo done
