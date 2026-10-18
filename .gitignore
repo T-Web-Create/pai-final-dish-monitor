@@ -7,3 +7,4 @@ recordings/
 __pycache__/
 .venv/
 ros2_ws/src/dish_description/models/img_*/
+.venv/
