@@ -1,116 +1,122 @@
-# Weekend Colony Watch — 嫌気チャンバー内培養ディッシュの遠隔経時観察ロボット
+# Weekend Colony Watch — Remote time-lapse observation of culture dishes in an anaerobic chamber
 
-Physical AI 応用1講座 最終課題「AI×ロボティクスによる創造的タスクの実現」の提出物です。
-ROS 2 + Gazebo 上で、UR3e アームが培養ディッシュを 6 時間ごとに蓋越しで撮影し、
-画像の経時追跡でコロニーの出現を自動判定して研究者に通知し、確定したときだけ蓋を
-吸着して持ち上げ、記録用の写真を撮ってすぐ戻します。
+English | [日本語](README.ja.md)
 
-- 動画（YouTube、2分57秒、実速と5倍速、速度は画面左上に常時表示）：https://youtu.be/d6FZ36axxk0
-- レポート（PDF）：omnicampus に提出
-- 本リポジトリ：コード一式と評価結果（画像データと録画は含みません）
+Final project for the Physical AI Applied Course 1: "Creative tasks with AI × robotics".
+In ROS 2 + Gazebo, a UR3e arm checks a culture dish every six hours through the closed lid.
+Time-lapse tracking of the fixed-camera images detects colony emergence, notifies the
+researcher, and opens the lid only when a colony is confirmed: the arm lifts the lid by
+suction, takes a record photo, and puts the lid back right away.
 
-## 何を解決するか
+- Video (YouTube, 2 min 57 s, real time and 5× speed; playback speed is shown at the top left at all times): https://youtu.be/d6FZ36axxk0
+- Report (PDF): submitted via omnicampus
+- This repository: all code and evaluation results (image data and recordings are not included)
 
-嫌気性菌の培養では、播種からコロニーが見えるまで 1〜3 日かかり、週末を挟むと経過が
-分かりません。蓋越しの観察は照明の映り込みで見誤りやすく、一方で嫌気チャンバー内は
-無菌ではないため蓋を開ける時間は最小限にしたい、という相反する要求があります。
+## The problem
 
-本システムは次の 2 つで解決します。
+Anaerobic bacteria take one to three days to form visible colonies after inoculation, so a
+dish inoculated on Friday is not seen again until Monday. Looking through the lid is error-prone
+because ceiling lights reflect off the polystyrene, yet the chamber is oxygen-free but not
+sterile, so the lid should be opened as little as possible. "Open the lid to see clearly"
+and "keep the lid closed" pull in opposite directions.
 
-1. **経時追跡**：固定カメラ・固定位置で撮った画像の t=0 基準の時間差分から候補を検出し、追跡して「成長するもの＝コロニー、成長しないもの＝反射・ゴミ」を見分ける。
-2. **適応的開放（第6案）**：疑いは蓋を開けずに通知し、確定したときだけ開けて写真を撮る。開放は 72 時間で 2 回（約 18 秒）。
+The system resolves this with two ideas.
 
-## 主な結果（合成画像、評価用シード 100〜129、コロニー 557 個）
+1. **Time-lapse tracking.** With a fixed camera and a fixed dish position, candidates are detected from the difference against the t=0 image, tracked over time, and separated into colonies (which grow) and artifacts such as reflections and dust (which do not).
+2. **Adaptive opening (policy 6).** A suspected colony is reported without opening the lid; the lid is opened only once a colony is confirmed, to take a photo for the notification. Two openings in 72 hours (about 18 s in total).
 
-| 条件 | 検出 | 見逃し | 誤検出 | 検出遅れ（中央値） |
+## Main results (synthetic images, held-out seeds 100–129, 557 ground-truth colonies)
+
+| Condition | Detected | Missed | False positives | Detection delay (median) |
 |---|---|---|---|---|
-| 蓋なし | 554 | 3 | 0 | 11.5 h |
-| 蓋越し | 553 | 4 | 0 | 11.7 h |
-| 偏光模擬 | 556 | 1 | 0 | 11.4 h |
+| Lid off | 554 | 3 | 0 | 11.5 h |
+| Through lid | 553 | 4 | 0 | 11.7 h |
+| Simulated polarizer | 556 | 1 | 0 | 11.4 h |
 
-開放方針の比較（蓋越し、1 枚・72 時間あたり）：毎回開ける 13.0 回 / 116 秒 →
-第6案 2.0 回 / 18 秒。疑いの通知は最初のコロニー出現から中央値 5.1 h、確定は 11.1 h。
-空の皿 30 枚で誤報 0。詳細は `results/` とレポートを参照してください。
+Opening policies (through lid, per dish over 72 h): open every time 13.0 openings / 116 s →
+policy 6 2.0 openings / 18 s. From the first colony's appearance, the "suspected" notice
+arrives after a median of 5.1 h and the "confirmed" notice after 11.1 h. Zero false alarms
+on 30 empty dishes. See `results/` and the report for details.
 
-## リポジトリ構成
+## Repository layout
 
-| パス | 内容 |
+| Path | Contents |
 |---|---|
-| `docker/` | ROS 2 Jazzy + Gazebo Harmonic 環境のコンテナ構築用ファイル |
-| `ros2_ws/src/dish_description/` | ディッシュ・蓋・ラック・固定カメラのモデルとワールド |
-| `ros2_ws/src/dish_bringup/scripts/lid_cycle.py` | 蓋操作（HIGH / DOWN / LIFT / RETRACT の 4 姿勢、DetachableJoint で吸着を模擬） |
-| `ros2_ws/src/dish_bringup/scripts/patrol.py` | 毎回蓋を開ける巡回（P0、比較用） |
-| `ros2_ws/src/dish_bringup/scripts/patrol6.py` | 採用した巡回（第6案：疑いは通知のみ、確定で開放） |
-| `ros2_ws/src/dish_bringup/scripts/run_patrol.sh` | 時刻ごとに別プロセスで巡回を実行（タイムアウト・復旧・やり直し付き） |
-| `ros2_ws/src/dish_bringup/scripts/recover.py` | 固まったときの復旧（吸着解除 → 待機姿勢） |
-| `ros2_ws/src/dish_bringup/scripts/dish_vision.py` | 固定カメラ画像の真上変換と検出器の呼び出し |
-| `ros2_ws/src/dish_bringup/scripts/detect_track.py` | 検出器（`tools/eval` と同一内容） |
-| `ros2_ws/src/dish_bringup/scripts/save_image.py` | カメラ画像の保存 |
-| `scripts/` | 補助スクリプト |
-| `tools/synth/` | 合成培地画像の生成（成長モデル、反射・ゴミ・気泡、正解ラベル）。uv 管理 |
-| `tools/eval/` | 検出・追跡（`detect_track.py`）、診断、開放方針の比較、空の皿の評価。uv 管理 |
-| `tools/gz/` | 退避姿勢の計算（UR3e の DH パラメータ、カメラ視野への投影） |
-| `tools/video/` | 動画のパネル生成・合成・録画の写り込み検査 |
-| `tools/tts/` | ナレーション生成（Kokoro、ローカル音声合成） |
-| `results/` | 評価結果のテキストと巡回ログ（`heldout_100_129.txt`、`policy_sim_lid_100_129.txt` など） |
+| `docker/` | Container setup for the ROS 2 Jazzy + Gazebo Harmonic environment |
+| `ros2_ws/src/dish_description/` | Models of the dish, lid, rack and fixed camera, and the world file |
+| `ros2_ws/src/dish_bringup/scripts/lid_cycle.py` | Lid handling (four poses HIGH / DOWN / LIFT / RETRACT; suction simulated with DetachableJoint) |
+| `ros2_ws/src/dish_bringup/scripts/patrol.py` | Patrol that opens the lid every time (P0, for comparison) |
+| `ros2_ws/src/dish_bringup/scripts/patrol6.py` | Adopted patrol (policy 6: notify on suspicion, open on confirmation) |
+| `ros2_ws/src/dish_bringup/scripts/run_patrol.sh` | Runs each observation time in its own process with timeouts, recovery and retries |
+| `ros2_ws/src/dish_bringup/scripts/recover.py` | Recovery after a hang (release suction, return to the rest pose) |
+| `ros2_ws/src/dish_bringup/scripts/dish_vision.py` | Top-down rectification of the camera image and the call into the detector |
+| `ros2_ws/src/dish_bringup/scripts/detect_track.py` | Detector (identical to the copy in `tools/eval`) |
+| `ros2_ws/src/dish_bringup/scripts/save_image.py` | Saves camera frames |
+| `scripts/` | Helper scripts |
+| `tools/synth/` | Synthetic dish image generator (growth model, reflections, dust, bubbles, ground-truth labels). Managed with uv |
+| `tools/eval/` | Detection and tracking (`detect_track.py`), diagnostics, opening-policy comparison, empty-dish evaluation. Managed with uv |
+| `tools/gz/` | Retract-pose computation (UR3e DH parameters, projection into the camera view) |
+| `tools/video/` | Video panel generation, compositing, and intrusion scans of the screen recording |
+| `tools/tts/` | Narration generation (Kokoro, local text-to-speech) |
+| `results/` | Evaluation outputs and patrol logs (`heldout_100_129.txt`, `policy_sim_lid_100_129.txt`, ...) |
 
-`data/`（合成画像）と `recordings/`（録画・動画）は `.gitignore` で除外しています。
-ROS 2 ノードは colcon、`tools/*` は uv で管理し、Python 環境を分けています。
+`data/` (synthetic images) and `recordings/` (screen recordings and the video) are excluded by `.gitignore`.
+ROS 2 nodes are built with colcon; `tools/*` use uv, so the Python environments stay separate.
 
-## 実行方法の概要
+## How to run (overview)
 
-実行環境：Ubuntu 24.04（arm64）、Docker、NVIDIA GPU。ROS 2 Jazzy と Gazebo Harmonic は
-コンテナ内、合成・評価・動画は各 `tools/*` の uv 環境で動かします。
+Environment: Ubuntu 24.04 (arm64), Docker, NVIDIA GPU. ROS 2 Jazzy and Gazebo Harmonic run
+inside the container; synthesis, evaluation and video tools run in their own uv environments under `tools/*`.
 
-**1. 合成画像の生成（ホスト）**
+**1. Generate synthetic images (host)**
 
 ~~~
 cd tools/synth && uv sync && uv run python synth.py --seed 112
 ~~~
 
-**2. 検出・追跡の評価（ホスト）**
+**2. Evaluate detection and tracking (host)**
 
 ~~~
 cd tools/eval && uv sync && uv run python detect_track.py
 ~~~
 
-**3. Gazebo の起動（コンテナ内）**
+**3. Start Gazebo (inside the container)**
 
 ~~~
 ros2 launch ur_simulation_gz ur_sim_control.launch.py
 ~~~
 
-**4. ディッシュの配置（コンテナ内）**
+**4. Spawn the dish (inside the container)**
 
 ~~~
 ~/ros2_ws/src/dish_bringup/scripts/spawn_dish.sh
 ~~~
 
-**5. 巡回の実行（ホストから背景実行）**
+**5. Run the patrol (from the host, in the background)**
 
 ~~~
 docker exec -d pai-sim bash -c 'PATROL=patrol6.py ~/ros2_ws/src/dish_bringup/scripts/run_patrol.sh 0 6 12 18 24 30 36 42 48 54 60 66 72 > ~/recordings/patrol6_run.log 2>&1'
 ~~~
 
-各スクリプトの引数と設定値は、ファイル冒頭のコメントと `tools/eval/detect_track.py` の `CFG` を参照してください。
+Arguments and settings are documented in the header comments of each script and in `CFG` of `tools/eval/detect_track.py`.
 
-## 模擬の範囲と限界
+## What is simulated, and limitations
 
-- 吸着は Gazebo の DetachableJoint による模擬で、物理的な吸引力は模擬していません。
-- 偏光は反射を 0.25 倍に弱めた画像による模擬です。
-- ディッシュの中身は合成画像で、蓋の上に置いた発光テクスチャの板として表示しています。照明の影響を受けず、映り込みは合成画像に描き込んだものです。
-- 合成画像の反射・ゴミは時刻が変わっても動かないため、時間差分の効果と空の皿での誤報 0 は実機より楽観的な可能性があります。
-- 評価用シードは調整用と同じ生成器で作っており、実機画像への汎化は未検証です。
-- 通知はログファイル（`notify_log.jsonl`）への書き出しのみで、送信手段は未実装です。
-- UR3e の当たり判定メッシュは生成できておらず、衝突は計算で確かめただけです。
+- Suction is simulated with Gazebo's DetachableJoint; no physical suction force is modeled.
+- The polarizer is simulated by attenuating reflections to 0.25×.
+- The dish contents are synthetic images shown on an emissive plane placed above the lid. They are unaffected by scene lighting, and the reflections are drawn into the synthetic images.
+- Reflections and dust in the synthetic images do not move between observations, so the effect of the time difference and the zero false alarms on empty dishes may be optimistic compared with a real setup.
+- Held-out seeds come from the same generator as the tuning seeds; generalization to real images is untested.
+- Notifications are only written to a log file (`notify_log.jsonl`); no delivery channel is implemented.
+- Collision meshes for the UR3e could not be generated, so collisions were checked only by computation.
 
-## 使用ツール
+## Tools used
 
-ROS 2 Jazzy、Gazebo Harmonic（ros_gz）、Universal Robots ROS 2 Gazebo Simulation（UR3e）、
-MoveIt2、Python / OpenCV / NumPy、uv、Docker、ffmpeg、Kokoro（音声合成）。
-講座の参考教材（ROS 2 と Gazebo の連携、UR3 の Pick and Place）は起動構成の参考にし、
-タスク設計・検出器・巡回・評価は独自に実装しました。
+ROS 2 Jazzy, Gazebo Harmonic (ros_gz), Universal Robots ROS 2 Gazebo Simulation (UR3e),
+MoveIt2, Python / OpenCV / NumPy, uv, Docker, ffmpeg, Kokoro (text-to-speech).
+The course materials (ROS 2 + Gazebo integration, UR3 pick-and-place) were used as references
+for the launch setup; the task design, detector, patrol and evaluation are original work.
 
-## ライセンス
+## License
 
 MIT License
